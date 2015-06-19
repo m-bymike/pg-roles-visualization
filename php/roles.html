@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html>
+<head lang="en">
+    <meta charset="UTF-8">
+    <title>sclable core: structure</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font: 300 14px 'Helvetica Neue', Helvetica;
+            color: #EFEFEF;
+            background:#000;
+        }
+        body div.background {
+            background: url(assets/img/bg.jpg) no-repeat center;
+            background-size: cover;
+            width:  100%;
+            height: 100%;
+            position: fixed;
+            z-index:-1;
+            opacity: 0.5;
+        }
+        body div.container {
+            margin: 0;
+            text-align: center;
+
+        }
+
+        /*body div.container svg {
+            width: 960px;
+            height: 960px;
+            margin: auto;
+        }*/
+
+        .node rect,
+        .node circle,
+        .node ellipse {
+            stroke: #333;
+            fill: #6C9;
+            stroke-width: 0px;
+            opacity: 0.8;
+        }
+
+        .edgePath path {
+            stroke: #CCC;
+            fill: #CCC;
+            stroke-width: 2px;
+            fill-opacity: 0.8;
+            stroke-opacity: 0.4;
+        }
+
+        .edgeLabel {
+            font: 300 11px 'Helvetica Neue', Helvetica;
+            fill: #EFEFEF;
+
+        }
+
+        @media print {
+            body div.background {
+                background: white;
+            }
+            .edgePath path {
+                stroke: #333;
+                fill: #333;
+                fill-opacity: 1;
+                stroke-opacity: 1;
+            }
+            .edgeLabel {
+                fill: #333;
+            }
+        }
+
+
+
+    </style>
+</head>
+<body>
+<div class="background"></div>
+<div class="container">
+
+</div>
+
+<script src="assets/js/d3.v3.min.js" charset="utf-8"></script>
+<script src="assets/js/dagre-d3.min.js"></script>
+<script>
+
+    var width = window.innerWidth,
+        initialHeight = window.innerHeight,
+
+        svg = d3.select("body div.container").append("svg"),
+        inner = svg.append("g");
+
+    svg
+            .attr('width', width)
+            .attr('height', initialHeight);
+
+    // Set up zoom support
+    var zoom = d3.behavior.zoom().on("zoom", function() {
+        inner.attr("transform", "translate(" + d3.event.translate + ")" +
+        "scale(" + d3.event.scale + ")");
+    });
+    svg.call(zoom);
+
+    // get data
+    d3.json('roles.php',function(error,data){
+        data = data[0];
+        var nodes = data.nodes;
+        var links = data.links;
+        var g = new dagreD3.graphlib.Graph({multigraph:true}).setGraph({
+            rankdir: "TB"
+        });
+        var registered = {};
+
+        // iterate through nodes and add them to the graph
+        nodes.forEach(function(n){
+            registered[n.id] = g.setNode(n.id, {
+                label: n.name,
+                shape: n.login ? "rect" : "circle"
+            });
+        });
+
+        // iterate through links and add them to the graph
+        links.forEach(function(l){
+
+            var src = l.source,
+                tgt = l.target;
+
+            if (
+                !registered.hasOwnProperty(src)
+                || !registered.hasOwnProperty(tgt)
+            ) {
+                console.log('skip link: ' + src + '_' + tgt);
+                return;
+            }
+
+            g.setEdge(
+                    src, tgt,
+                    {
+                        label: ''
+//                        lineInterpolate: 'monotone'
+                    },
+                    src+'_'+tgt
+            );
+        });
+
+        // Create the renderer
+        var render = new dagreD3.render();
+
+        // Run the renderer. This is what draws the final graph.
+        render(inner, g);
+
+        // adjust height
+        var initialScale = 0.75;
+        //svg.attr('height', g.graph().height * initialScale + 40);
+
+        // Center the graph
+        zoom
+                .translate([(svg.attr("width") - g.graph().width * initialScale) / 2, 20])
+                .scale(initialScale)
+                .event(svg);
+
+
+    });
+
+</script>
+
+</body>
+</html>
