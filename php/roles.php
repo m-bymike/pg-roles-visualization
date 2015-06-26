@@ -31,11 +31,11 @@
 
 ////// CONFIGURATION //////
 
-$database = 'sclable';   // database name
+$database = 'roletests';   // database name
 $host = 'localhost';     // database hostname
 $port = 5432;            // database connection port
 $username = 'postgres';  // database username/rolename
-$password = '';          // database password for user
+$password = '123';          // database password for user
 
 
 ////// END CONFIGURATION //////
@@ -60,9 +60,9 @@ WITH nn AS (
     FROM pg_auth_members
     WHERE roleid IN (SELECT id FROM nn) AND member IN (SELECT id FROM nn)
 ), nn_json AS (
-    SELECT json_agg(nn.*) as nodes FROM nn
+    SELECT COALESCE(json_agg(nn.*), '[]') as nodes FROM nn
 ), ll_json AS (
-    SELECT json_agg(ll.*) as links FROM ll
+    SELECT COALESCE(json_agg(ll.*), '[]') as links FROM ll
 ), combined AS (
     SELECT * FROM nn_json, ll_json
 )

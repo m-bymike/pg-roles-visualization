@@ -44,8 +44,8 @@ WITH nn AS (
     FROM pg_auth_members
     WHERE roleid IN (SELECT id FROM nn) AND member IN (SELECT id FROM nn)
 ), nn_json AS (
-    SELECT json_agg(nn.*) as nodes FROM nn
+  SELECT COALESCE(json_agg(nn.*), '[]') as nodes FROM nn
 ), ll_json AS (
-    SELECT json_agg(ll.*) as links FROM ll
+  SELECT COALESCE(json_agg(ll.*), '[]') as links FROM ll
 )
 SELECT * FROM nn_json, ll_json;
